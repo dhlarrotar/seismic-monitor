@@ -1,0 +1,202 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap');
+
+        /* CRITICAL: Ensure the body and main container take up full height for the layout to work */
+        html, body {
+            height: 100%;
+            margin: 0;
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background-color: #0F172A; /* Slate 900 */
+            color: #E2E8F0; /* Slate 200 */
+            overflow: hidden; /* Hide main scrollbar, content handles scrolling internally */
+        }
+
+        /* --- LOADER STYLES --- */
+        #app-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: #0F172A;
+            z-index: 10000;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .loader-dot {
+            width: 12px;
+            height: 12px;
+            background-color: #6366F1;
+            border-radius: 50%;
+            margin: 0 6px;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        .loader-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loader-dot:nth-child(3) { animation-delay: 0.4s; }
+
+        @keyframes pulse {
+            0%, 100% {
+                transform: scale(0.8);
+                opacity: 0.7;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 1;
+            }
+        }
+
+        .hidden-loader {
+            opacity: 0;
+            pointer-events: none;
+        }
+        /* --- END LOADER STYLES --- */
+
+        #app-container { 
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+        }
+
+        #content-area { 
+            flex-grow: 1; 
+            position: relative; 
+            min-height: 0;
+            overflow: hidden;
+        }
+        
+        /* FIX: Set a dark background for map containers to hide gray area when zoomed out */
+        #map { 
+            width: 100%; 
+            height: 100%; 
+            z-index: 10; 
+            background-color: #0F172A; /* Ensure dark background */
+        }
+        
+        /* Dashboard view MUST handle its own scrolling */
+        #dashboard-view {
+            overflow-y: auto; 
+            height: 100%;
+        }
+
+        #mini-map {
+            width: 100%; 
+            height: 100%; 
+            z-index: 0; 
+            background-color: #0F172A; /* Ensure dark background */
+        }
+
+        /* Ensure tab contents fill the space */
+        .tab-content { display: none; width: 100%; height: 100%; }
+        .tab-content.active { display: block; }
+        
+        /* Dashboard Card Styles */
+        .card { 
+            background-color: #1E293B; /* Slate 800 */
+            border-radius: 0.5rem;
+            padding: 1.25rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+            border: 1px solid #334155;
+        }
+
+        /* Chart container base styles */
+        .chart-container {
+            background-color: #1E293B;
+            padding: 1rem;
+            border-radius: 0.5rem;
+        }
+        
+        /* Loading Spinner */
+        .spinner { animation: spin 1s linear infinite; }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Leaflet Dark Popup Styles */
+        .dark-popup .leaflet-popup-content-wrapper {
+            background: #1F2937; color: #F9FAFB;
+            border-radius: 8px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+            border: 1px solid #374151;
+        }
+        .dark-popup .leaflet-popup-tip { background: #1F2937; }
+        .dark-popup b { color: #FFFFFF; font-weight: 700; } 
+
+        /* Magnitude Styles */
+        .mag-badge-large { background-color: #DC2626; padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-weight: 700; font-size: 1.5rem; }
+        
+        /* Input/Select base style */
+        .app-control {
+            border-radius: 0.375rem;
+            border: 1px solid #4B5563; /* Gray 600 */
+            background-color: #1F2937; /* Gray 800 */
+            color: #E5E7EB; /* Gray 200 */
+            padding: 0.5rem 0.75rem;
+            font-size: 0.875rem; /* sm */
+            box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .app-control:focus {
+            border-color: #6366F1; /* Indigo 500 */
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.5);
+        }
+
+        /* Improved Earthquake Counter */
+        #loading-status .earthquake-count-display {
+            font-size: 1.25rem; /* text-xl */
+            font-weight: 700;   /* font-bold */
+            color: #818CF8;     /* Indigo 400 */
+            margin-left: 0.5rem;
+        }
+
+        /* Country Filter Status */
+        #country-filter-status {
+            padding: 0.5rem;
+            border-radius: 0.375rem;
+            margin-top: 0.75rem;
+            border: 1px solid;
+            transition: all 0.2s;
+        }
+        
+        /* Smallest screens (mobile) adjustments for the map legend */
+        .mobile-legend-optimized {
+            width: 100%;
+            max-width: 95%;
+            padding: 0.75rem;
+            font-size: 0.75rem;
+            bottom: 0.5rem; 
+            left: 50%;
+            transform: translateX(-50%);
+            right: auto;
+        }
+
+        /* --- NEW ANIMATION STYLES --- */
+        /* Smooth animation for filter panel on mobile */
+        #filter-controls-wrapper {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+            padding-top: 0;
+        }
+        #filter-controls-wrapper.open {
+            max-height: 30rem; /* ~480px, enough for filters */
+            padding-top: 0.5rem;
+        }
+        
+        /* On 'sm' screens and larger, filters are always visible */
+        @media (min-width: 640px) {
+            #filter-controls-wrapper {
+                max-height: none;
+                overflow: visible;
+                padding-top: 0.5rem;
+            }
+        }
+        
+        /* Smooth transition for tab underlines */
+        .tab-button {
+            transition: all 0.3s ease-in-out;
+        }

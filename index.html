@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+ <head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title id="app-title">
+   Seismic Monitor &amp; Dashboard
+  </title>
+  <!-- FAVICON (Activity/Pulse Icon) -->
+  <link href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%236366F1' stroke-width='2' stroke-linecap='round' stroke-linejoin='round' class='lucide lucide-activity'%3E%3Cpath d='M22 12h-4l-3 9L9 3l-3 9H2'/%3E%3C/svg%3E" rel="icon" type="image/svg+xml"/>
+  <!-- 1. Leaflet CSS -->
+  <link href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" rel="stylesheet">
+   <!-- 2. Custom Styles -->
+  </link>
+  <link href="style.css" rel="stylesheet"/>
+ </head>
+ <body class="bg-gray-900 text-white">
+  <!-- 1. LOADING OVERLAY -->
+  <div id="app-loader">
+   <div class="flex items-center space-x-2">
+    <div class="loader-dot">
+    </div>
+    <div class="loader-dot">
+    </div>
+    <div class="loader-dot">
+    </div>
+   </div>
+  </div>
+  <!-- END LOADING OVERLAY -->
+  <div id="app-container">
+   <!-- HEADER AND GLOBAL CONTROLS -->
+   <!-- Tighter vertical padding: py-2 -->
+   <header class="py-2 px-4 bg-gray-900 border-b border-gray-700 z-50 flex-shrink-0">
+    <div class="flex flex-col container mx-auto max-w-7xl space-y-2">
+     <!-- Row 1: Title and Status -->
+     <div class="flex items-center justify-between space-x-4">
+      <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 min-w-0">
+       <h1 class="text-xl sm:text-2xl font-bold text-white flex items-center space-x-2" id="header-title">
+        <i class="h-6 w-6 text-indigo-400" data-lucide="activity">
+        </i>
+        <span>
+         Seismic Monitor
+        </span>
+       </h1>
+       <span class="flex items-center space-x-2 text-sm text-gray-400" id="loading-status">
+        <!-- Status text -->
+       </span>
+      </div>
+     </div>
+     <!-- Row 2: MOBILE Options Toggle Button (Full width, hidden on desktop) -->
+     <div class="sm:hidden flex justify-center w-full">
+      <button class="flex items-center justify-center space-x-2 w-full py-2 px-4 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-700 transition-colors duration-150" id="filter-toggle-btn-mobile">
+       <span id="filter-toggle-text-mobile">
+        Options
+       </span>
+       <i class="h-4 w-4" data-lucide="chevron-down" id="filter-toggle-icon-mobile">
+       </i>
+      </button>
+     </div>
+     <!-- Row 3: Filters and Settings (Animated on mobile, visible on desktop) -->
+     <!-- Base classes for animation, 'sm:flex' overrides for desktop -->
+     <div class="w-full sm:flex sm:flex-col md:flex-row md:space-x-6 space-y-4 md:space-y-0" id="filter-controls-wrapper">
+      <!-- Group 1: Data Filters -->
+      <div class="flex-1">
+       <h3 class="text-sm font-medium text-gray-400 mb-2 border-b border-gray-700 pb-1" id="data-filters-title">
+        Data Filters
+       </h3>
+       <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <!-- Time Selector -->
+        <select class="app-control col-span-2 md:col-span-1" id="time-select">
+         <option id="time-day" value="day">
+          Last 24 hours
+         </option>
+         <option id="time-week" selected="" value="week">
+          Last 7 days
+         </option>
+         <option id="time-month" value="month">
+          Last 30 days
+         </option>
+        </select>
+        <!-- Magnitude Filter -->
+        <select class="app-control" id="mag-select">
+         <option id="mag-all" value="all">
+          Magnitude: All
+         </option>
+         <option value="2.5">
+          M 2.5+
+         </option>
+         <option value="4.0">
+          M 4.0+
+         </option>
+         <option value="5.0">
+          M 5.0+
+         </option>
+         <option value="6.0">
+          M 6.0+
+         </option>
+         <option value="7.0">
+          M 7.0+
+         </option>
+        </select>
+        <!-- Depth Filter -->
+        <select class="app-control" id="depth-select">
+         <option id="depth-all" value="all">
+          Depth: All
+         </option>
+         <option id="depth-shallow" value="shallow">
+          Shallow (0-30 km)
+         </option>
+         <option id="depth-intermediate" value="intermediate">
+          Intermediate (30-100 km)
+         </option>
+         <option id="depth-deep" value="deep">
+          Deep (100-300 km)
+         </option>
+         <option id="depth-vdeep" value="vdeep">
+          Very Deep (+300 km)
+         </option>
+        </select>
+        <!-- Country Filter Input -->
+        <input class="app-control col-span-2 md:col-span-1" id="country-input" placeholder="Search Country (e.g., Japan)" title="Enter country to filter dashboard." type="text"/>
+       </div>
+      </div>
+      <!-- Group 2: Display Settings -->
+      <div class="md:w-64">
+       <h3 class="text-sm font-medium text-gray-400 mb-2 border-b border-gray-700 pb-1" id="settings-title">
+        Settings
+       </h3>
+       <div class="grid grid-cols-2 gap-3">
+        <!-- Language Selector -->
+        <select class="app-control" id="lang-select">
+         <option selected="" value="en">
+          English
+         </option>
+         <option value="es">
+          Español
+         </option>
+        </select>
+        <!-- Basemap Selector -->
+        <select class="app-control" id="basemap-select">
+         <option id="map-dark" value="dark">
+          Basemap: Dark
+         </option>
+         <option id="map-standard" value="standard">
+          Basemap: Standard
+         </option>
+        </select>
+       </div>
+      </div>
+      <!-- Filter Status Message (inside the wrapper) -->
+      <div class="text-sm text-gray-300 hidden px-4 py-2 mt-3 -mx-4 md:mx-0" id="country-filter-status">
+       <!-- Status message goes here -->
+      </div>
+     </div>
+    </div>
+   </header>
+   <!-- TAB SELECTION (flex-shrink-0) -->
+   <div class="bg-gray-800/50 border-b border-gray-700 flex-shrink-0">
+    <div class="container mx-auto max-w-7xl px-4">
+     <div class="flex space-x-4">
+      <!-- 1. DASHBOARD Button (Default active) -->
+      <button class="tab-button py-2 px-4 text-sm font-medium border-b-2 border-indigo-500 transition-colors duration-200 text-white" data-tab="dashboard-view" id="tab-dashboard">
+       <i class="inline h-4 w-4 mr-1" data-lucide="layout-dashboard">
+       </i>
+       Dashboard
+      </button>
+      <!-- 2. Map Button -->
+      <button class="tab-button py-2 px-4 text-sm font-medium border-b-2 border-transparent hover:border-indigo-500 transition-colors duration-200 text-gray-400" data-tab="map-view" id="tab-map">
+       <i class="inline h-4 w-4 mr-1" data-lucide="globe">
+       </i>
+       Map Explorer
+      </button>
+     </div>
+    </div>
+   </div>
+   <!-- CONTENT AREA (MAP OR DASHBOARD) -->
+   <div id="content-area">
+    <!-- 1. DASHBOARD VIEW (Tab 1 - Default ACTIVE) -->
+    <!-- Tighter padding/gaps: p-2, gap-2, mb-2 -->
+    <div class="tab-content active p-2 h-full" id="dashboard-view">
+     <div class="container mx-auto max-w-7xl flex flex-col min-h-full">
+      <!-- Top Row: Stats (gap-2, mb-2) -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-2 mb-2 flex-shrink-0">
+       <!-- Card 1: Total Earthquakes -->
+       <div class="card flex flex-col items-center justify-center py-2">
+        <i class="h-7 w-7 text-indigo-400 mb-1" data-lucide="activity">
+        </i>
+        <p class="text-sm font-medium text-gray-400" id="stat-total-title">
+         Total Earthquakes
+        </p>
+        <p class="text-4xl font-extrabold text-white mt-1" id="total-count-stat">
+         0
+        </p>
+       </div>
+       <!-- Card 2: Strongest Earthquake -->
+       <div class="card text-center py-2">
+        <p class="text-sm font-medium text-gray-400 mb-2" id="stat-strongest-title">
+         Strongest Earthquake
+        </p>
+        <span class="mag-badge-large text-base sm:text-2xl" id="strongest-mag-stat">
+         0.0
+        </span>
+        <p class="text-sm text-gray-300 mt-2 truncate" id="strongest-place-stat">
+         N/A
+        </p>
+        <p class="text-xs text-gray-500 mt-1" id="strongest-time-stat">
+         N/A
+        </p>
+        <p class="text-xs text-gray-500" id="strongest-depth-stat">
+         Depth: N/A
+        </p>
+       </div>
+       <!-- Card 3: Most Recent Earthquake -->
+       <div class="card text-center py-2">
+        <p class="text-sm font-medium text-gray-400 mb-2" id="stat-recent-title">
+         Most Recent Earthquake
+        </p>
+        <p class="text-4xl font-extrabold text-green-400" id="recent-mag-stat">
+         0.0
+        </p>
+        <p class="text-sm text-gray-300 mt-1 truncate" id="recent-place-stat">
+         N/A
+        </p>
+        <p class="text-xs text-gray-500" id="recent-time-stat">
+         N/A ago
+        </p>
+       </div>
+      </div>
+      <!-- Message Area (flex-shrink-0) -->
+      <div class="p-3 mb-2 text-center text-base rounded-lg bg-indigo-600/20 text-indigo-300 border border-indigo-500 hidden flex-shrink-0" id="dashboard-message">
+       <!-- Message content goes here -->
+      </div>
+      <!-- Bottom Row: Map + Charts (gap-2, mb-2) -->
+      <div class="grid grid-cols-1 lg:col-span-3 lg:grid-cols-3 gap-2 mb-2" id="dashboard-charts-row">
+       <!-- Mini Map Card -->
+       <!-- Height adjusted to lg:h-[260px] -->
+       <div class="card relative lg:col-span-1 h-[350px] lg:h-[260px] flex flex-col" id="mini-map-card">
+        <h3 class="text-lg font-semibold mb-2 text-white flex-shrink-0" id="minimap-title">
+         Distribution Map
+        </h3>
+        <div class="flex-grow relative">
+         <div class="w-full h-full absolute rounded-md z-0" id="mini-map">
+         </div>
+        </div>
+       </div>
+       <!-- Magnitude Chart Card -->
+       <!-- Height adjusted to lg:h-[260px] -->
+       <div class="chart-container lg:col-span-1 h-[350px] lg:h-[260px] flex flex-col">
+        <h3 class="text-lg font-semibold mb-2 text-white flex-shrink-0" id="chart-mag-title">
+         Magnitude Distribution
+        </h3>
+        <div class="flex-grow relative">
+         <canvas class="w-full h-full absolute" id="magnitudeChart">
+         </canvas>
+        </div>
+       </div>
+       <!-- Depth Chart Card -->
+       <!-- Height adjusted to lg:h-[260px] -->
+       <div class="chart-container lg:col-span-1 h-[350px] lg:h-[260px] flex flex-col">
+        <h3 class="text-lg font-semibold mb-2 text-white flex-shrink-0" id="chart-depth-title">
+         Depth Distribution (km)
+        </h3>
+        <div class="flex-grow relative">
+         <canvas class="w-full h-full absolute" id="depthChart">
+         </canvas>
+        </div>
+       </div>
+      </div>
+      <!-- Footer for Dashboard View (Tighter padding) -->
+      <div class="pt-2 pb-2 border-t border-gray-700 text-center text-xs text-gray-500 flex-shrink-0">
+       <p>
+        © 2025 Seismic Monitor. Author: Daniel Larrota R.
+       </p>
+       <p id="footer-data-source">
+       </p>
+      </div>
+     </div>
+    </div>
+    <!-- 2. MAP VIEW (Tab 2) -->
+    <div class="tab-content relative h-full" id="map-view">
+     <div id="map">
+     </div>
+     <!-- Map Legend (Mobile Optimized) -->
+     <div class="mobile-legend-optimized md:absolute md:bottom-4 md:right-4 md:left-auto md:translate-x-0 z-[1000] rounded-lg bg-gray-800/70 shadow-lg backdrop-blur-md border border-gray-700/50 text-sm md:w-60">
+      <h4 class="mb-3 font-bold text-white text-center" id="legend-mag-title">
+       Magnitude (Size)
+      </h4>
+      <div class="flex items-center justify-start space-x-4 mb-4 px-2">
+       <div class="relative flex-shrink-0 flex items-center justify-center" style="width: 40px; height: 40px;">
+        <span class="absolute h-9 w-9 rounded-full bg-gray-500/30">
+        </span>
+        <span class="absolute h-5 w-5 rounded-full bg-gray-500/50">
+        </span>
+        <span class="absolute h-2 w-2 rounded-full bg-gray-500/70">
+        </span>
+       </div>
+       <div class="text-xs text-gray-300" id="legend-mag-desc">
+        Circle size
+        <br/>
+        indicates magnitude.
+       </div>
+      </div>
+      <hr class="border-gray-600 my-3"/>
+      <h4 class="mb-2 font-bold text-white text-center" id="legend-depth-title">
+       Depth (Color)
+      </h4>
+      <div class="space-y-2">
+       <div class="flex items-center">
+        <span class="h-3 w-3 rounded-full mr-2 border border-black flex-shrink-0" style="background-color: #FFEB3B; opacity: 0.8;">
+        </span>
+        <span id="depth-0-30">
+         0 – 30 km (Shallow)
+        </span>
+       </div>
+       <div class="flex items-center">
+        <span class="h-3 w-3 rounded-full mr-2 border border-black flex-shrink-0" style="background-color: #FF9800; opacity: 0.8;">
+        </span>
+        <span id="depth-30-100">
+         30 – 100 km (Intermediate)
+        </span>
+       </div>
+       <div class="flex items-center">
+        <span class="h-3 w-3 rounded-full mr-2 border border-black flex-shrink-0" style="background-color: #2196F3; opacity: 0.8;">
+        </span>
+        <span id="depth-100-300">
+         100 – 300 km (Deep)
+        </span>
+       </div>
+       <div class="flex items-center">
+        <span class="h-3 w-3 rounded-full mr-2 border border-black flex-shrink-0" style="background-color: #3F51B5; opacity: 0.8;">
+        </span>
+        <span id="depth-300-plus">
+         +300 km (Very Deep)
+        </span>
+       </div>
+      </div>
+      <p class="mt-4 text-center text-xs text-gray-400" id="legend-source">
+       Earthquake Data: USGS
+      </p>
+     </div>
+    </div>
+   </div>
+   <!-- Error Notification (Toast) -->
+   <div class="absolute bottom-4 left-1/2 -translate-x-1/2 z-[2000] hidden rounded-lg bg-red-600 px-5 py-3 text-base font-medium text-white shadow-lg" id="error-toast">
+    <div class="flex items-center space-x-2">
+     <i class="h-5 w-5" data-lucide="alert-triangle">
+     </i>
+     <span id="error-message">
+     </span>
+    </div>
+   </div>
+  </div>
+  <!-- START: External Scripts - Order is important (Libraries before App Logic) -->
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js">
+  </script>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js">
+  </script>
+  <script src="https://unpkg.com/lucide@latest">
+  </script>
+  <!-- END: External Scripts -->
+  <!-- 5. Application Logic -->
+  <script defer="True" src="script.js">
+  </script>
+ </body>
+</html>
