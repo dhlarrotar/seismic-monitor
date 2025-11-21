@@ -57,10 +57,7 @@ The application will load and automatically fetch the default data (Magnitude 2.
 
 ## 🤝 Contribution
 
-This tool is a personal experiment built for fun and learning. While it is a single-file project, I welcome any suggestions or bug reports!
+This tool is a personal experiment built for fun and learning
 
 * **Found a bug?** Please open an issue.
 * **Have a suggestion?** Feel free to reach out directly.
-
----
-*Created by **Daniel Larrota R.** – [Portfolio](https://dlarrotar.netlify.app/)*
