@@ -282,23 +282,17 @@
          0
         </p>
        </div>
-       <div class="compact-card card text-center">
-        <p class="text-sm font-medium text-gray-400 mb-2" id="stat-strongest-title">
-         Strongest Earthquake
-        </p>
-        <span class="mag-badge-large text-base" id="strongest-mag-stat">
-         0.0
-        </span>
-        <p class="text-sm text-gray-300 mt-2 truncate" id="strongest-place-stat">
-         Not available
-        </p>
-        <p class="text-xs text-gray-500 mt-1" id="strongest-time-stat">
-         Not available
-        </p>
-        <p class="text-xs text-gray-500" id="strongest-depth-stat">
-         Depth: Not available
-        </p>
-       </div>
+    <div class="compact-card card text-center">
+     <p class="text-sm font-medium text-gray-400 mb-2" id="stat-strongest-title">
+      Strongest Earthquake
+     </p>
+     <!-- Use same large magnitude styling as the Recent card, only differ by color -->
+     <p class="text-3xl font-extrabold text-red-400" id="strongest-mag-stat">0.0</p>
+     <p class="text-sm text-gray-300 mt-1 truncate" id="strongest-place-stat">Not available</p>
+     <p class="text-xs text-gray-500 mt-1" id="strongest-date-stat">Not available</p>
+     <p class="text-xs text-gray-500" id="strongest-depth-stat">Depth: Not available</p>
+     <p class="text-xs text-gray-400 italic mt-1" id="strongest-time-stat">Not available</p>
+    </div>
        <div class="compact-card card text-center">
         <p class="text-sm font-medium text-gray-400 mb-2" id="stat-recent-title">
          Most Recent Earthquake
@@ -355,9 +349,9 @@
       </div>
       <!-- Footer -->
       <div class="pt-2 pb-1 border-t border-gray-700 text-center text-xs text-gray-500 mt-2">
-       <p>
-        © 2025 Seismic Monitor. Author: Daniel Larrota R.
-       </p>
+      <p>
+       © 2025 Seismic Monitor. Author: <a href="https://dlarrotar.netlify.app/" target="_blank" rel="noopener noreferrer" class="text-indigo-300 hover:text-indigo-400">Daniel Larrota R.</a>
+      </p>
        <p class="text-xs" id="footer-data-source">
        </p>
       </div>

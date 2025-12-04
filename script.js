@@ -263,12 +263,30 @@
                 if (isHidden) filterControlsWrapperEl.classList.remove('open');
             }
 
+            // When filters are hidden we want the arrow to point the opposite
+            // direction to guide the user (e.g. show -> arrow points up/down opposite).
             const stateKey = isHidden ? 'options-show' : 'options-hide';
+            // Use chevrons so the icon points toward where the panel will open/close.
+            // Swap direction: when hidden we want a chevron-down (guide toward open area),
+            // and when visible show chevron-up (indicate it will hide back up).
             const iconKey = isHidden ? 'chevron-down' : 'chevron-up';
             if (filterToggleTextDesktop) filterToggleTextDesktop.innerText = translate(stateKey);
-            if (filterToggleIconDesktop) filterToggleIconDesktop.setAttribute('data-lucide', iconKey);
             if (filterToggleTextMobile) filterToggleTextMobile.innerText = translate(stateKey);
-            if (filterToggleIconMobile) filterToggleIconMobile.setAttribute('data-lucide', iconKey);
+
+            // Replace icon nodes with fresh <i data-lucide="..."> so lucide will render
+            // an updated SVG even if the previous element had already been replaced.
+            const replaceToggleIcon = (elId, k) => {
+                const el = document.getElementById(elId);
+                if (!el) return;
+                // Replace outer HTML with new placeholder <i> so lucide can create the icon
+                el.outerHTML = `<i class="h-4 w-4" data-lucide="${k}" id="${elId}"></i>`;
+            };
+
+            replaceToggleIcon('filter-toggle-icon-desktop', iconKey);
+            replaceToggleIcon('filter-toggle-icon-mobile', iconKey);
+            // Re-query DOM nodes so future references stay correct
+            filterToggleIconDesktop = document.getElementById('filter-toggle-icon-desktop');
+            filterToggleIconMobile = document.getElementById('filter-toggle-icon-mobile');
             lucide.createIcons();
         }
 
@@ -693,7 +711,7 @@
                 safeSetText('total-count-stat', '0');
                 document.getElementById('strongest-mag-stat').innerText = formatNumber2(0);
                 document.getElementById('strongest-place-stat').innerText = translate('not-available');
-                document.getElementById('strongest-time-stat').innerText = translate('not-available');
+                document.getElementById('strongest-date-stat').innerText = translate('not-available');
                 document.getElementById('strongest-depth-stat').innerText = translate('not-available');
                 document.getElementById('recent-mag-stat').innerText = formatNumber2(0);
                 document.getElementById('recent-place-stat').innerText = translate('not-available');
@@ -714,7 +732,9 @@
 
             document.getElementById('strongest-mag-stat').innerText = formatNumber2(strong.properties.mag);
             safeSetText('strongest-place-stat', strong.properties.place);
-            document.getElementById('strongest-time-stat').innerText = formatDate(strong.properties.time, currentLang);
+            // Date (absolute) and relative time for strongest
+            document.getElementById('strongest-date-stat').innerText = formatDate(strong.properties.time, currentLang);
+            document.getElementById('strongest-time-stat').innerText = timeSince(strong.properties.time);
             document.getElementById('strongest-depth-stat').innerText = `${translate('depth-label')}: ${formatNumber2(strong.geometry.coordinates[2])} km`;
 
             document.getElementById('recent-mag-stat').innerText = formatNumber2(recent.properties.mag);
@@ -980,11 +1000,23 @@
             // Update filter toggle button text based on current state
             const isHidden = (window.innerWidth >= 640) ? !filterControlsWrapperEl.classList.contains('open') : filterControlsWrapperEl.classList.contains('hidden');
             const stateKey = isHidden ? 'options-show' : 'options-hide';
+            // Ensure the icon points toward the place where the panel will open/close.
+            // When hidden -> chevron-down; when open -> chevron-up.
             const iconKey = isHidden ? 'chevron-down' : 'chevron-up';
             if (filterToggleTextDesktop) filterToggleTextDesktop.innerText = translate(stateKey);
-            if (filterToggleIconDesktop) filterToggleIconDesktop.setAttribute('data-lucide', iconKey);
             if (filterToggleTextMobile) filterToggleTextMobile.innerText = translate(stateKey);
-            if (filterToggleIconMobile) filterToggleIconMobile.setAttribute('data-lucide', iconKey);
+            // Ensure icons are fresh <i> placeholders so lucide recreates the SVGs
+            const replaceIconSafely = (elId, k) => {
+                const el = document.getElementById(elId);
+                if (!el) return;
+                el.outerHTML = `<i class="h-4 w-4" data-lucide="${k}" id="${elId}"></i>`;
+            };
+            replaceIconSafely('filter-toggle-icon-desktop', iconKey);
+            replaceIconSafely('filter-toggle-icon-mobile', iconKey);
+            // Refresh references
+            filterToggleIconDesktop = document.getElementById('filter-toggle-icon-desktop');
+            filterToggleIconMobile = document.getElementById('filter-toggle-icon-mobile');
+            lucide.createIcons();
 
             safeSetHTML('tab-map', `<i data-lucide="globe" class="inline h-4 w-4 mr-1"></i> ${translate('tab-map')}`);
             safeSetHTML('tab-dashboard', `<i data-lucide="layout-dashboard" class="inline h-4 w-4 mr-1"></i> ${translate('tab-dashboard')}`);
@@ -1045,7 +1077,7 @@
             if (metersBtn) metersBtn.innerText = translate('marker-meters');
 
             // Ensure dashboard placeholders use translated 'Not available'
-            const placeholders = ['strongest-place-stat','strongest-time-stat','strongest-depth-stat','recent-place-stat','recent-date-stat','recent-depth-stat','recent-time-stat'];
+            const placeholders = ['strongest-place-stat','strongest-date-stat','strongest-depth-stat','strongest-time-stat','recent-place-stat','recent-date-stat','recent-depth-stat','recent-time-stat'];
             placeholders.forEach(id => { const el = document.getElementById(id); if (el) el.innerText = translate('not-available'); });
         }
 
@@ -1168,6 +1200,10 @@
                 L.control.zoom({ position: 'bottomleft' }).addTo(map);
                 
                 // Fix minimap - ensure it shows whole world
+                // Initialize minimap slightly more zoomed-out to avoid the
+                // 'clipped' appearance inside the compact dashboard card.
+                // Setting minZoom: 0 and a starting zoom of 0 ensures the full
+                // world fits comfortably inside the small container.
                 miniMap = L.map('mini-map', { 
                     zoomControl: false, 
                     attributionControl: false, 
@@ -1175,7 +1211,7 @@
                     touchZoom: false, 
                     scrollWheelZoom: false, 
                     doubleClickZoom: false 
-                }).setView([0, 0], 1); // Start at zoom level 1 to see whole world
+                }).setView([0, 0], 0); // Start at zoom level 0 to show more of the world
                 
                     earthquakeLayer = L.layerGroup().addTo(map);
                     miniMapLayer = L.layerGroup().addTo(miniMap);
@@ -1187,7 +1223,7 @@
                     // Ensure minimap shows whole world and has correct proportions. Use fitWorld for full extent
                     setTimeout(() => {
                         if (miniMap) {
-                            try { miniMap.fitWorld(); } catch(e) { miniMap.setView([0, 0], 1); }
+                            try { miniMap.fitWorld({ padding: [8, 8] }); miniMap.setMinZoom(0); } catch(e) { miniMap.setView([0, 0], 0); }
                             miniMap.invalidateSize();
                         }
                     }, 100);
@@ -1360,8 +1396,21 @@
                 // Recalculate size in case layout changed
                 try { miniMap.invalidateSize(); } catch(e) {}
                 plotEarthquakes(filtered, miniMap, miniMapLayer);
-                if (cBounds) safeFlyToBounds(miniMap, cBounds, { padding: [20,20], duration: MINI_MAP_FLY_DURATION });
-                else safeFlyTo(miniMap, 20, 0, 1, { duration: MINI_MAP_FLY_DURATION });
+                if (cBounds) {
+                    // If a country filter is active, zoom the mini-map to that country
+                    safeFlyToBounds(miniMap, cBounds, { padding: [20,20], duration: MINI_MAP_FLY_DURATION });
+                } else {
+                    // For the global (no-country) state, keep the mini-map zoomed out to the
+                    // full world view instead of jumping to a closer zoom. This prevents
+                    // behaviour where returning to the dashboard zooms the minimap in.
+                    try {
+                        miniMap.setMinZoom(0);
+                        miniMap.fitWorld({ padding: [8, 8] });
+                    } catch(e) {
+                        // fallback: set a conservative zoom level of 0
+                        try { miniMap.setView([0, 0], 0); } catch(e) {}
+                    }
+                }
             }
 
             generateDashboard(filtered);

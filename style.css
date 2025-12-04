@@ -444,6 +444,16 @@
             .compact-charts {
                 grid-template-columns: repeat(3, 1fr);
             }
+            /* Make sure the mini-map card matches the fixed height used for chart containers
+               so all dashboard boxes line up nicely even when filters are hidden */
+            .compact-charts .compact-card,
+            .compact-charts .compact-chart-container {
+                height: 250px; /* same height as chart containers */
+                min-height: 220px; /* slightly looser on very small desktops */
+            }
+            /* Ensure map inside mini-map card sizes correctly */
+            #mini-map-card .flex-grow { position: relative; height: 100%; }
+            #mini-map-card #mini-map { position: absolute; inset: 0; height: 100%; width: 100%; }
         }
         
         .compact-card {
