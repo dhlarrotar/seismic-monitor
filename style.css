@@ -254,6 +254,9 @@
                  (parent containers now grow naturally rather than using fixed 100vh).
                  Leaflet and three.js need non-zero height to render their canvases. */
              #map, #globe-container { min-height: 55vh; height: auto; }
+             /* In the dedicated Map tab we want a larger viewport so the map fills
+                 more of the screen and avoids blank space below. */
+             #map-view > #map { min-height: 72dvh; }
              /* If a container uses h-full and becomes zero, give it a fallback
                  min-height so it's visible on mobile. */
              .tab-content.relative.h-full { min-height: 55vh; }
@@ -262,8 +265,8 @@
              #dashboard-view { height: auto; max-height: none; overflow-y: visible; }
             /* Ensure the dashboard mini-map has a usable height on phones */
             .compact-charts .compact-card, #mini-map-card {
-                /* keep things compact but visible — leave charts taller on wider screens */
-                min-height: 140px;
+                /* keep things compact but visible — give more height so the mini-map is usable */
+                min-height: 200px;
             }
             #mini-map { position: relative; height: 100%; width: 100%; }
 
@@ -315,6 +318,18 @@
             .mobile-legend-toggle i, .mobile-3d-legend-toggle i { pointer-events: none; }
             /* Ensure the mobile filter toggle sits above other elements for reliable taps */
             #filter-toggle-btn-mobile { z-index: 1400; position: relative; }
+
+            /* Only show the toggles that belong to the active tab — avoid duplicates
+               appearing across views because fixed elements can otherwise be visible
+               while their parent content is hidden. */
+            .tab-content:not(.active) .mobile-legend-toggle,
+            .tab-content:not(.active) .mobile-3d-legend-toggle {
+                display: none !important;
+            }
+            .tab-content.active .mobile-legend-toggle,
+            .tab-content.active .mobile-3d-legend-toggle {
+                display: inline-flex !important;
+            }
         }
 
         /* Small screen global adjustments for a friendlier mobile look */

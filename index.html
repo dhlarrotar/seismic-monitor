@@ -403,10 +403,7 @@
         </span>
        </div>
       </div>
-      <!-- Mobile toggle for map legend (only visible on small screens) -->
-      <button id="toggle-map-legend-btn" class="mobile-legend-toggle md:hidden" aria-pressed="false" aria-controls="map-legend" title="Show map legend">
-        <i data-lucide="eye" class="h-5 w-5"></i>
-      </button>
+      <!-- Mobile toggle moved outside the legend so it remains visible when legend is hidden -->
       <hr class="border-gray-600 my-3"/>
       <h4 class="mb-2 font-bold text-white text-center" id="legend-depth-title">
        Depth (Color)
@@ -445,6 +442,11 @@
        Earthquake Data: USGS
       </p>
      </div>
+    <!-- Floating map legend toggle for mobile (keeps visible even when legend is hidden) -->
+    <!-- NOTE: this button must live *inside* #map-view so CSS rules can scope visibility to the active tab -->
+    <button id="toggle-map-legend-btn" class="mobile-legend-toggle md:hidden" aria-pressed="false" aria-controls="map-legend" title="Show map legend">
+      <i data-lucide="eye" class="h-5 w-5"></i>
+    </button>
     </div>
     <!-- Closing div for map-view -->
     <!-- TAB 3: 3D GLOBE -->

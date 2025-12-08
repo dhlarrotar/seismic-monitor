@@ -266,12 +266,15 @@
                 // Keep header size in sync: add/remove a class so CSS can shrink/grow
                 try { const hdr = document.querySelector('header'); if (hdr) hdr.classList.toggle('filters-open', isNowOpen); } catch(e) { }
             } else {
-                // On mobile we toggle the 'hidden' class
-                isHidden = filterControlsWrapperEl.classList.toggle('hidden');
-                // Also ensure 'open' class is unset on mobile to avoid conflicting styles
-                if (isHidden) filterControlsWrapperEl.classList.remove('open');
-                // Mobile screens: maintain header shrink when filters hidden
-                try { const hdr = document.querySelector('header'); if (hdr) hdr.classList.toggle('filters-open', !isHidden); } catch(e) { }
+                // On mobile we toggle visibility using the `open` class so the
+                // CSS max-height transition is applied. Also keep `hidden` in sync
+                // for consistent state (it is used on larger screens).
+                const isNowOpen = filterControlsWrapperEl.classList.toggle('open');
+                // Keep the `hidden` class in sync: set hidden when not open
+                filterControlsWrapperEl.classList.toggle('hidden', !isNowOpen);
+                isHidden = !isNowOpen;
+                // Mobile screens: maintain header shrink when filters visible
+                try { const hdr = document.querySelector('header'); if (hdr) hdr.classList.toggle('filters-open', isNowOpen); } catch(e) { }
             }
 
             // When filters are hidden we want the arrow to point the opposite
@@ -437,6 +440,8 @@
                     setBtnState(tMapBtn, visible, 'map legend');
                     try { localStorage.setItem('mapLegendVisible', String(visible)); } catch(e){}
                     try { lucide.createIcons(); } catch(e){}
+                    // After changing legend visibility make sure Leaflet recalculates map size
+                    try { if (map && typeof map.invalidateSize === 'function') { map.invalidateSize(); setTimeout(() => map.invalidateSize(), 120); } } catch(e){}
                 });
                 // pointer/touch fallback
                 tMapBtn.addEventListener('pointerup', () => { try { tMapBtn.click(); } catch(e){} });
