@@ -242,6 +242,24 @@
 
         /* Mobile specific tweaks to improve small-screen UX */
         @media (max-width: 639px) {
+             /* Allow natural page scrolling on mobile to avoid clipped content
+                 We intentionally remove the global overflow:hidden on small screens
+                 so the browser can scroll the body instead of relying on internal
+                 container scrolling which can lead to clipping on mobile devices. */
+             html, body { overflow: auto; height: auto; }
+             /* Let app container grow naturally rather than forcing 100vh which
+                 may behave inconsistently on mobile browser UI (address bar). */
+             #app-container { min-height: 100dvh; height: auto; }
+             /* Ensure the main map and globe have a visible area on small screens
+                 (parent containers now grow naturally rather than using fixed 100vh).
+                 Leaflet and three.js need non-zero height to render their canvases. */
+             #map, #globe-container { min-height: 55vh; height: auto; }
+             /* If a container uses h-full and becomes zero, give it a fallback
+                 min-height so it's visible on mobile. */
+             .tab-content.relative.h-full { min-height: 55vh; }
+             #content-area { overflow: visible; }
+             .tab-content { height: auto; }
+             #dashboard-view { height: auto; max-height: none; overflow-y: visible; }
             /* Ensure the dashboard mini-map has a usable height on phones */
             .compact-charts .compact-card, #mini-map-card {
                 /* keep things compact but visible — leave charts taller on wider screens */
@@ -288,13 +306,15 @@
                 color: #E2E8F0; border: 1px solid rgba(148,163,184,0.3); box-shadow: 0 6px 14px rgba(2,6,23,0.45);
                 transition: transform 160ms ease, opacity 160ms ease; backdrop-filter: blur(6px);
             }
-            .mobile-legend-toggle { right: 12px; bottom: 76px; }
-            .mobile-3d-legend-toggle { right: 12px; bottom: 12px; }
+            .mobile-legend-toggle { right: 12px; bottom: 76px; z-index: 1400; }
+            .mobile-3d-legend-toggle { right: 12px; bottom: 12px; z-index: 1400; }
 
             .mobile-legend-toggle:hover, .mobile-3d-legend-toggle:hover { transform: translateY(-3px); opacity: 0.98; }
 
             /* Make touch targets slightly larger and accessible */
             .mobile-legend-toggle i, .mobile-3d-legend-toggle i { pointer-events: none; }
+            /* Ensure the mobile filter toggle sits above other elements for reliable taps */
+            #filter-toggle-btn-mobile { z-index: 1400; position: relative; }
         }
 
         /* Small screen global adjustments for a friendlier mobile look */

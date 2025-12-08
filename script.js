@@ -249,7 +249,12 @@
         function safeSetText(id, textKey) { const el = document.getElementById(id); if (el) el.innerText = translate(textKey); }
         function safeSetHTML(id, htmlContent) { const el = document.getElementById(id); if (el) { const content = (typeof htmlContent === 'string' && htmlContent.includes('**')) ? translate(htmlContent).replace(/\*\*(.*?)\*\*/g, '<b>$1</b>') : translate(htmlContent); el.innerHTML = content; } }
         
+        // small debounce guard to avoid double-invokes from multiple touch/click events
+        let lastFilterToggleMs = 0;
         function toggleFilters() {
+            const now = Date.now();
+            if (now - lastFilterToggleMs < 300) return; // ignore spurious duplicates
+            lastFilterToggleMs = now;
             if (!filterControlsWrapperEl) return;
             let isHidden;
             // On larger screens, we control visibility via the 'open' class (CSS uses media queries)
@@ -433,6 +438,9 @@
                     try { localStorage.setItem('mapLegendVisible', String(visible)); } catch(e){}
                     try { lucide.createIcons(); } catch(e){}
                 });
+                // pointer/touch fallback
+                tMapBtn.addEventListener('pointerup', () => { try { tMapBtn.click(); } catch(e){} });
+                tMapBtn.addEventListener('touchend', () => { try { tMapBtn.click(); } catch(e){} }, { passive: true });
             }
 
             if (t3dBtn && threeLegend) {
@@ -443,6 +451,9 @@
                     try { localStorage.setItem('threeLegendVisible', String(visible)); } catch(e){}
                     try { lucide.createIcons(); } catch(e){}
                 });
+                // pointer/touch fallback
+                t3dBtn.addEventListener('pointerup', () => { try { t3dBtn.click(); } catch(e){} });
+                t3dBtn.addEventListener('touchend', () => { try { t3dBtn.click(); } catch(e){} }, { passive: true });
             }
         }
         function formatDate(timestamp, lang) {
@@ -1255,8 +1266,26 @@
             
             if (filterToggleBtnDesktop) filterToggleBtnDesktop.addEventListener('click', toggleFilters);
             if (filterToggleBtnMobile) filterToggleBtnMobile.addEventListener('click', toggleFilters);
+            // Also ensure touch/pointer interactions always trigger the toggle
+            if (filterToggleBtnMobile) {
+                filterToggleBtnMobile.addEventListener('pointerup', (e) => { try { toggleFilters(); } catch(e){} });
+                filterToggleBtnMobile.addEventListener('touchend', (e) => { try { toggleFilters(); } catch(e){} }, { passive: true });
+            }
             // Wire up mobile legend toggles (map & 3D) so legends are hidden/shown on phones
             try { initMobileLegendToggles(); } catch (e) { /* non-fatal */ }
+
+            // Robust fallback for mobile filter toggle: some mobile overlays or
+            // browser quirks can cause the button's direct handler to be missed.
+            // Add a delegated listener so taps are always captured.
+            try {
+                document.addEventListener('click', function delegatedFilterToggle(e) {
+                    const el = e.target && e.target.closest ? e.target.closest('#filter-toggle-btn-mobile') : null;
+                    if (el) {
+                        // call the same toggleFilters handler
+                        try { toggleFilters(); } catch(err) { console.warn('toggleFilters failed via delegated handler', err); }
+                    }
+                }, { passive: true });
+            } catch (e) { /* ignore */ }
 
             // Marker mode toggle handling (settings)
             const setMarkerMode = (mode) => {
