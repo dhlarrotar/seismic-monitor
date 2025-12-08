@@ -395,6 +395,56 @@
                 return Number(num).toLocaleString(locale, { minimumFractionDigits: 0, maximumFractionDigits: 2 });
             } catch(e) { return Number(num).toFixed(2).replace(/\.0+$/, '').replace(/(\.[0-9]*?)0+$/, '$1'); }
         }
+
+        // --- Mobile legend toggle helpers ---
+        function initMobileLegendToggles() {
+            const mapLegend = document.getElementById('map-legend');
+            const threeLegend = document.getElementById('legend-3d');
+            const tMapBtn = document.getElementById('toggle-map-legend-btn');
+            const t3dBtn = document.getElementById('toggle-3d-legend-btn');
+
+            function setBtnState(btn, visible, name) {
+                if (!btn) return;
+                btn.setAttribute('aria-pressed', String(visible));
+                btn.setAttribute('title', visible ? `Hide ${name}` : `Show ${name}`);
+                btn.innerHTML = `<i data-lucide="${visible ? 'eye-off' : 'eye'}" class="h-5 w-5"></i>`;
+            }
+
+            try {
+                const mapVisible = localStorage.getItem('mapLegendVisible');
+                const threeVisible = localStorage.getItem('threeLegendVisible');
+                if (mapLegend) {
+                    const show = mapVisible === 'true';
+                    mapLegend.classList.toggle('show', show);
+                    setBtnState(tMapBtn, show, 'map legend');
+                }
+                if (threeLegend) {
+                    const show = threeVisible === 'true';
+                    threeLegend.classList.toggle('show', show);
+                    setBtnState(t3dBtn, show, '3D legend');
+                }
+            } catch (e) { /* ignore */ }
+
+            if (tMapBtn && mapLegend) {
+                tMapBtn.addEventListener('click', () => {
+                    const visible = !mapLegend.classList.contains('show');
+                    mapLegend.classList.toggle('show', visible);
+                    setBtnState(tMapBtn, visible, 'map legend');
+                    try { localStorage.setItem('mapLegendVisible', String(visible)); } catch(e){}
+                    try { lucide.createIcons(); } catch(e){}
+                });
+            }
+
+            if (t3dBtn && threeLegend) {
+                t3dBtn.addEventListener('click', () => {
+                    const visible = !threeLegend.classList.contains('show');
+                    threeLegend.classList.toggle('show', visible);
+                    setBtnState(t3dBtn, visible, '3D legend');
+                    try { localStorage.setItem('threeLegendVisible', String(visible)); } catch(e){}
+                    try { lucide.createIcons(); } catch(e){}
+                });
+            }
+        }
         function formatDate(timestamp, lang) {
             return new Date(timestamp).toLocaleString(lang === 'es' ? 'es-CO' : 'en-US', { timeStyle: 'short', dateStyle: 'medium' });
         }
@@ -1205,6 +1255,8 @@
             
             if (filterToggleBtnDesktop) filterToggleBtnDesktop.addEventListener('click', toggleFilters);
             if (filterToggleBtnMobile) filterToggleBtnMobile.addEventListener('click', toggleFilters);
+            // Wire up mobile legend toggles (map & 3D) so legends are hidden/shown on phones
+            try { initMobileLegendToggles(); } catch (e) { /* non-fatal */ }
 
             // Marker mode toggle handling (settings)
             const setMarkerMode = (mode) => {

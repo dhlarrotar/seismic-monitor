@@ -367,7 +367,8 @@
      <div id="map">
      </div>
      <!-- Legend -->
-     <div class="mobile-legend-optimized md:absolute md:bottom-4 md:right-4 md:left-auto md:translate-x-0 z-[1000] rounded-lg bg-gray-800/70 shadow-lg backdrop-blur-md border border-gray-700/50 text-sm md:w-64">
+    <!-- Mobile map legend (hidden by default on phones) -->
+    <div class="mobile-legend-optimized md:absolute md:bottom-4 md:right-4 md:left-auto md:translate-x-0 z-[1000] rounded-lg bg-gray-800/70 shadow-lg backdrop-blur-md border border-gray-700/50 text-sm md:w-64" id="map-legend">
       <h4 class="mb-3 font-bold text-white text-center" id="legend-mag-title">
        Magnitude Scale
       </h4>
@@ -402,6 +403,10 @@
         </span>
        </div>
       </div>
+      <!-- Mobile toggle for map legend (only visible on small screens) -->
+      <button id="toggle-map-legend-btn" class="mobile-legend-toggle md:hidden" aria-pressed="false" aria-controls="map-legend" title="Show map legend">
+        <i data-lucide="eye" class="h-5 w-5"></i>
+      </button>
       <hr class="border-gray-600 my-3"/>
       <h4 class="mb-2 font-bold text-white text-center" id="legend-depth-title">
        Depth (Color)
@@ -475,7 +480,7 @@
       </p>
      </div>
      <!-- Simplified 3D Legend -->
-     <div class="absolute top-4 right-4 z-20 legend-3d md:w-56">
+    <div class="absolute top-4 right-4 z-20 legend-3d md:w-56" id="legend-3d">
       <h4 id="legend-3d-title">
        3D Visualization Legend
       </h4>
@@ -525,6 +530,10 @@
        Click on bars for earthquake details
       </div>
      </div>
+     <!-- 3D legend toggle for mobile: small floating button to avoid covering the screen -->
+     <button id="toggle-3d-legend-btn" class="mobile-3d-legend-toggle md:hidden" aria-pressed="false" aria-controls="legend-3d" title="Show 3D legend">
+       <i data-lucide="eye" class="h-5 w-5"></i>
+     </button>
     </div>
     <!-- Closing div for 3d-view -->
    </div>

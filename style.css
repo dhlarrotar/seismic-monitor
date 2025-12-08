@@ -239,6 +239,72 @@
             flex-direction: column;
             gap: 6px;
         }
+
+        /* Mobile specific tweaks to improve small-screen UX */
+        @media (max-width: 639px) {
+            /* Ensure the dashboard mini-map has a usable height on phones */
+            .compact-charts .compact-card, #mini-map-card {
+                /* keep things compact but visible — leave charts taller on wider screens */
+                min-height: 140px;
+            }
+            #mini-map { position: relative; height: 100%; width: 100%; }
+
+            /* Make the map legend clearly visible and centered on mobile */
+            .mobile-legend-optimized {
+                position: fixed; /* make it float above the map and not be clipped by containers */
+                left: 8px; right: 8px; bottom: 12px; transform: none;
+                width: auto; max-width: calc(100% - 16px);
+                z-index: 1200; padding: 0.5rem; font-size: 0.78rem;
+                border-radius: 10px;
+            }
+
+            /* Keep the legend compact: show size examples only unless explicitly expanded */
+            .mobile-legend-optimized .legend-size-examples { gap: 8px; }
+            .mobile-legend-optimized hr { display: none; } /* hide depth separator to save space */
+            .mobile-legend-optimized .depth-colors { display: none; }
+
+            /* Make the 3D legend compact and non-blocking on phones */
+            .legend-3d {
+                right: 8px; left: 8px; top: auto; bottom: 6px; max-width: calc(100% - 16px);
+                max-height: 36vh; overflow-y: auto; padding: 10px; font-size: 12px;
+                border-radius: 10px; box-shadow: 0 6px 12px rgba(0,0,0,0.35);
+            }
+            .legend-3d h4 { font-size: 13px; margin-bottom: 8px; }
+            .legend-3d .legend-section { margin-bottom: 8px; }
+        }
+
+        /* Hide legends on small screens by default; toggle buttons will add .show to reveal them */
+        @media (max-width: 639px) {
+            #map-legend { display: none; }
+            #map-legend.show { display: block; }
+
+            #legend-3d { display: none; }
+            #legend-3d.show { display: block; }
+
+            /* Mobile floating toggle buttons */
+            .mobile-legend-toggle, .mobile-3d-legend-toggle {
+                position: fixed; z-index: 1300; display: inline-flex; align-items: center; justify-content: center;
+                width: 44px; height: 44px; border-radius: 9999px; background: rgba(15, 23, 42, 0.9);
+                color: #E2E8F0; border: 1px solid rgba(148,163,184,0.3); box-shadow: 0 6px 14px rgba(2,6,23,0.45);
+                transition: transform 160ms ease, opacity 160ms ease; backdrop-filter: blur(6px);
+            }
+            .mobile-legend-toggle { right: 12px; bottom: 76px; }
+            .mobile-3d-legend-toggle { right: 12px; bottom: 12px; }
+
+            .mobile-legend-toggle:hover, .mobile-3d-legend-toggle:hover { transform: translateY(-3px); opacity: 0.98; }
+
+            /* Make touch targets slightly larger and accessible */
+            .mobile-legend-toggle i, .mobile-3d-legend-toggle i { pointer-events: none; }
+        }
+
+        /* Small screen global adjustments for a friendlier mobile look */
+        @media (max-width: 639px) {
+            header { padding: 0.5rem 0.6rem; }
+            .compact-card { padding: 0.75rem; }
+            .compact-charts { gap: 0.6rem; }
+            /* make filter toggle buttons larger for touch */
+            #filter-toggle-btn-mobile { padding: 0.75rem 1rem; font-size: 0.92rem; }
+        }
         
         .depth-color-item {
             display: flex;
