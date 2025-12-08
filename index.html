@@ -45,6 +45,11 @@
       </div>
       <!-- Header Actions -->
       <div class="header-actions">
+       <!-- Country filter badge (shows small, non-overlapping indicator) -->
+       <div id="country-filter-badge" class="hidden items-center space-x-2 mr-3 text-sm px-3 py-1 rounded-full bg-indigo-600/20 border border-indigo-500 text-indigo-200 cursor-pointer select-none">
+        <span id="country-filter-badge-text" class="truncate max-w-[200px]">Filtered: <strong>Japan</strong></span>
+        <span id="country-filter-badge-clear" class="opacity-70 hover:opacity-100 ml-2">✕</span>
+       </div>
        <!-- Settings Button -->
        <div class="settings-container">
         <button class="settings-btn" id="settings-btn">
@@ -102,7 +107,7 @@
          </div>
         </div>
        </div>
-       <!-- Desktop Filter Toggle - Only show on mobile -->
+      <!-- Desktop Filter Toggle - Only show on mobile -->
        <button class="hidden sm:flex items-center justify-center space-x-1 py-1 px-3 rounded-lg text-sm font-medium bg-indigo-600 hover:bg-indigo-700 transition-colors duration-150 flex-shrink-0" id="filter-toggle-btn-desktop">
         <span id="filter-toggle-text-desktop">
          Hide Filters
@@ -368,32 +373,32 @@
       </h4>
       <!-- Size Examples -->
       <div class="legend-size-examples">
-       <div class="size-example">
-        <div class="size-circle" style="width: 6px; height: 6px; background-color: #E2E8F0; border: 1px solid #94A3B8;">
+      <div class="size-example">
+      <div class="size-circle" style="width: 4px; height: 4px; background-color: #E2E8F0; border: 1px solid #94A3B8;">
         </div>
         <span class="text-gray-300">
          M 2.5
         </span>
        </div>
-       <div class="size-example">
-        <div class="size-circle" style="width: 12px; height: 12px; background-color: #E2E8F0; border: 1px solid #94A3B8;">
+      <div class="size-example">
+      <div class="size-circle" style="width: 8px; height: 8px; background-color: #E2E8F0; border: 1px solid #94A3B8;">
         </div>
         <span class="text-gray-300">
          M 4.0
         </span>
        </div>
-       <div class="size-example">
-        <div class="size-circle" style="width: 18px; height: 18px; background-color: #E2E8F0; border: 1px solid #94A3B8;">
+      <div class="size-example">
+      <div class="size-circle" style="width: 12px; height: 12px; background-color: #E2E8F0; border: 1px solid #94A3B8;">
         </div>
         <span class="text-gray-300">
          M 5.5
         </span>
        </div>
-       <div class="size-example">
-        <div class="size-circle" style="width: 24px; height: 24px; background-color: #E2E8F0; border: 1px solid #94A3B8;">
+      <div class="size-example">
+      <div class="size-circle" style="width: 20px; height: 20px; background-color: #E2E8F0; border: 1px solid #94A3B8;">
         </div>
         <span class="text-gray-300">
-         M 7.0+
+         M 7.0
         </span>
        </div>
       </div>

@@ -241,6 +241,8 @@
         let settingsBtn, settingsPopup;
         let currentFilters = {};
         let significantEarthquakesNotified = new Set();
+        // Header badge nodes for country filter indicator
+        let countryFilterBadgeEl, countryFilterBadgeText, countryFilterBadgeClear;
 
         // --- UTILITY FUNCTIONS ---
         function translate(key) { return translations[currentLang][key] || translations['en'][key] || key; }
@@ -256,11 +258,15 @@
                 // Keep 'hidden' synchronized for cases where mobile styles are applied
                 filterControlsWrapperEl.classList.toggle('hidden', !isNowOpen);
                 isHidden = !isNowOpen;
+                // Keep header size in sync: add/remove a class so CSS can shrink/grow
+                try { const hdr = document.querySelector('header'); if (hdr) hdr.classList.toggle('filters-open', isNowOpen); } catch(e) { }
             } else {
                 // On mobile we toggle the 'hidden' class
                 isHidden = filterControlsWrapperEl.classList.toggle('hidden');
                 // Also ensure 'open' class is unset on mobile to avoid conflicting styles
                 if (isHidden) filterControlsWrapperEl.classList.remove('open');
+                // Mobile screens: maintain header shrink when filters hidden
+                try { const hdr = document.querySelector('header'); if (hdr) hdr.classList.toggle('filters-open', !isHidden); } catch(e) { }
             }
 
             // When filters are hidden we want the arrow to point the opposite
@@ -284,10 +290,16 @@
 
             replaceToggleIcon('filter-toggle-icon-desktop', iconKey);
             replaceToggleIcon('filter-toggle-icon-mobile', iconKey);
-            // Re-query DOM nodes so future references stay correct
+                // Re-query DOM nodes so future references stay correct
             filterToggleIconDesktop = document.getElementById('filter-toggle-icon-desktop');
             filterToggleIconMobile = document.getElementById('filter-toggle-icon-mobile');
             lucide.createIcons();
+                // Reposition the country banner because filters visibility changed
+                setTimeout(() => { try { if (typeof repositionCountryStatus === 'function') repositionCountryStatus(); } catch(e) {} }, 120);
+            // If the 3D view is active, force a resize / layout update so the
+            // three.js renderer and camera are kept in sync with the stable
+            // content area. We use a short timeout so the DOM has time to settle.
+            setTimeout(() => { try { if (typeof onThreeResize === 'function') onThreeResize(); } catch(e) {} }, 120);
         }
 
         function hideLoader() {
@@ -334,15 +346,26 @@
         }
 
         function getPixelRadius(mag) {
-            // Return radius in pixels for L.circleMarker so screen-size matches legend examples.
-            const minMag = 2.5, maxMag = 8.0;
-            const minPx = 3; // radius pixels, corresponds to 6px diameter in legend (reduced)
-            const maxPx = 12; // radius pixels, corresponds to 24px diameter in legend (reduced)
-            if (mag < minMag) return minPx;
-            if (mag > maxMag) return maxPx;
-            const normalized = (mag - minMag) / (maxMag - minMag);
-            const exponential = Math.pow(normalized, 1.4);
-            return Math.round(minPx + exponential * (maxPx - minPx));
+            // Map magnitudes to pixel radii so they match the legend examples
+            // exactly for the reference points: 2.5 -> 3px, 4.0 -> 6px, 5.5 -> 9px, 7.0+ -> 12px.
+            // We'll use a linear mapping between 2.5 and 7.0 so legend samples align.
+            // Reduce the size range so markers are smaller but still readable.
+            // Legend diameters will match these radii * 2 (see index.html updates).
+            const minMag = 2.5, legendMaxMag = 7.0;
+            const minPx = 2; // radius pixels -> 4px diameter in legend
+            const maxPx = 8; // radius pixels -> 16px diameter in legend
+            if (!Number.isFinite(mag)) return minPx;
+            if (mag <= minMag) return minPx;
+            if (mag >= legendMaxMag) {
+                // Provide extra visual separation for very large earthquakes.
+                // Slight bump for M 7.0 - 7.9, stronger bump for M >= 8.0.
+                if (mag < legendMaxMag + 1.0) return Math.round(maxPx * 1.25); // e.g. 8 -> 10
+                return Math.round(maxPx * 1.5); // e.g. 9+ -> 12
+            }
+            const normalized = (mag - minMag) / (legendMaxMag - minMag);
+            // Use linear mapping for predictable legend match
+            const v = minPx + normalized * (maxPx - minPx);
+            return Math.round(v);
         }
         
         function timeSince(timestamp) {
@@ -709,11 +732,11 @@
 
             if (f.length === 0) {
                 safeSetText('total-count-stat', '0');
-                document.getElementById('strongest-mag-stat').innerText = formatNumber2(0);
+                document.getElementById('strongest-mag-stat').innerText = formatNumber1(0);
                 document.getElementById('strongest-place-stat').innerText = translate('not-available');
                 document.getElementById('strongest-date-stat').innerText = translate('not-available');
                 document.getElementById('strongest-depth-stat').innerText = translate('not-available');
-                document.getElementById('recent-mag-stat').innerText = formatNumber2(0);
+                document.getElementById('recent-mag-stat').innerText = formatNumber1(0);
                 document.getElementById('recent-place-stat').innerText = translate('not-available');
                 document.getElementById('recent-date-stat').innerText = translate('not-available');
                 document.getElementById('recent-depth-stat').innerText = translate('not-available');
@@ -730,14 +753,14 @@
             const recent = [...f].sort((a,b)=>b.properties.time - a.properties.time)[0];
             const strong = sorted[0];
 
-            document.getElementById('strongest-mag-stat').innerText = formatNumber2(strong.properties.mag);
+            document.getElementById('strongest-mag-stat').innerText = formatNumber1(strong.properties.mag);
             safeSetText('strongest-place-stat', strong.properties.place);
             // Date (absolute) and relative time for strongest
             document.getElementById('strongest-date-stat').innerText = formatDate(strong.properties.time, currentLang);
             document.getElementById('strongest-time-stat').innerText = timeSince(strong.properties.time);
             document.getElementById('strongest-depth-stat').innerText = `${translate('depth-label')}: ${formatNumber2(strong.geometry.coordinates[2])} km`;
 
-            document.getElementById('recent-mag-stat').innerText = formatNumber2(recent.properties.mag);
+            document.getElementById('recent-mag-stat').innerText = formatNumber1(recent.properties.mag);
             safeSetText('recent-place-stat', recent.properties.place);
             document.getElementById('recent-date-stat').innerText = formatDate(recent.properties.time, currentLang);
             document.getElementById('recent-depth-stat').innerText = `${translate('depth-label')}: ${formatNumber2(recent.geometry.coordinates[2])} km`;
@@ -989,6 +1012,34 @@
             threeRenderer.setSize(c.clientWidth, c.clientHeight);
         }
 
+        // Reposition the country filter banner when the filters open/close or on resize.
+        function repositionCountryStatus() {
+            if (!countryFilterStatusEl) return;
+            if (!filterControlsWrapperEl) return;
+            // Only reposition when visible
+            if (countryFilterStatusEl.classList.contains('hidden')) return;
+            try {
+                const hdr = document.querySelector('header');
+                if (hdr && filterControlsWrapperEl.classList.contains('open')) {
+                    const topOffset = filterControlsWrapperEl.offsetTop + filterControlsWrapperEl.offsetHeight + 6;
+                    countryFilterStatusEl.style.position = 'absolute';
+                    countryFilterStatusEl.style.top = `${topOffset}px`;
+                    countryFilterStatusEl.style.bottom = '';
+                    countryFilterStatusEl.style.left = '1rem';
+                    countryFilterStatusEl.style.right = '1rem';
+                    countryFilterStatusEl.style.pointerEvents = 'auto';
+                } else {
+                    // ensure overlay bottom placement
+                    countryFilterStatusEl.style.position = 'absolute';
+                    countryFilterStatusEl.style.bottom = '0.8rem';
+                    countryFilterStatusEl.style.top = '';
+                    countryFilterStatusEl.style.left = '1rem';
+                    countryFilterStatusEl.style.right = '1rem';
+                    countryFilterStatusEl.style.pointerEvents = 'none';
+                }
+            } catch(e) { console.warn('repositionCountryStatus failed', e); }
+        }
+
         // --- UI UPDATE ---
         function updateUI() {
             safeSetText('app-title', 'title');
@@ -1092,6 +1143,9 @@
             errorToastEl = document.getElementById('error-toast'); errorMessageEl = document.getElementById('error-message'); dashboardMessageEl = document.getElementById('dashboard-message');
             langSelectEl = document.getElementById('lang-select'); timeSelectEl = document.getElementById('time-select'); magSelectEl = document.getElementById('mag-select'); depthSelectEl = document.getElementById('depth-select'); countryInputEl = document.getElementById('country-input');
             countryFilterStatusEl = document.getElementById('country-filter-status');
+            countryFilterBadgeEl = document.getElementById('country-filter-badge');
+            countryFilterBadgeText = document.getElementById('country-filter-badge-text');
+            countryFilterBadgeClear = document.getElementById('country-filter-badge-clear');
             filterControlsWrapperEl = document.getElementById('filter-controls-wrapper');
             filterToggleBtnDesktop = document.getElementById('filter-toggle-btn-desktop'); filterToggleTextDesktop = document.getElementById('filter-toggle-text-desktop'); filterToggleIconDesktop = document.getElementById('filter-toggle-icon-desktop');
             filterToggleBtnMobile = document.getElementById('filter-toggle-btn-mobile'); filterToggleTextMobile = document.getElementById('filter-toggle-text-mobile'); filterToggleIconMobile = document.getElementById('filter-toggle-icon-mobile');
@@ -1111,11 +1165,18 @@
             currentLang = langSelectEl.value || 'en';
             try { markerMode = localStorage.getItem('markerMode') || 'pixel'; } catch(e) { markerMode = 'pixel'; console.warn('localStorage disabled, defaulting markerMode to pixel'); }
             
-            // Show filters by default on desktop
+            // Show filters by default on desktop and keep header size in sync
             if (window.innerWidth >= 640) {
                 filterControlsWrapperEl.classList.remove('hidden');
                 filterControlsWrapperEl.classList.add('open');
+                try { const hdr = document.querySelector('header'); if (hdr) hdr.classList.add('filters-open'); } catch(e) {}
             }
+
+            // On resize make sure the 3D renderer and the country banner are kept in sync
+            window.addEventListener('resize', () => {
+                try { if (typeof onThreeResize === 'function') onThreeResize(); } catch(e) {}
+                try { if (typeof repositionCountryStatus === 'function') repositionCountryStatus(); } catch(e) {}
+            });
             
             // Initialize maps first and wait for them to be ready before loading data
             await initMaps();
@@ -1160,6 +1221,14 @@
             setMarkerMode(markerMode);
 
             let countryInputTimer;
+            // Clear-from-badge handler: clicking the small badge removes the country filter
+            if (countryFilterBadgeClear) {
+                countryFilterBadgeClear.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    try { if (countryInputEl) countryInputEl.value = ''; } catch(e) {}
+                    applyFilters(false);
+                });
+            }
             countryInputEl.addEventListener('input', () => { clearTimeout(countryInputTimer); countryInputTimer = setTimeout(() => { applyFilters(false); }, 500); });
 
             // Enhancement event listeners
@@ -1436,11 +1505,33 @@
             }
 
             if (countryFilterStatusEl) {
-                countryFilterStatusEl.classList.toggle('hidden', !isCountry);
+                // legacy overlay - keep updated text but hide it by default so it
+                // doesn't overlap tabs. The header badge is the primary visible
+                // indicator and is designed to be non-overlapping and clickable.
                 countryFilterStatusEl.innerText = filterMsg;
                 countryFilterStatusEl.className = `text-sm hidden px-4 py-2 mt-3 ${filterMsg.includes('not recognized') || filterMsg.includes('no earthquakes') ? 'bg-red-600/30 border border-red-500 text-red-100' : 'bg-indigo-600/30 border border-indigo-500 text-indigo-100'}`;
-                if (isCountry) countryFilterStatusEl.classList.remove('hidden');
+                countryFilterStatusEl.classList.add('hidden');
             }
+
+            // Update header badge to show the active country filter. We favour the
+            // compact header badge which doesn't change layout or overlap tabs.
+            try {
+                if (countryFilterBadgeEl) {
+                    if (isCountry) {
+                        // Resolve a pretty name (use geodata if available)
+                        const geo = getCountryGeodata(rawCountry);
+                        const displayName = (geo && geo.success && geo.name) ? geo.name : rawCountry;
+                        countryFilterBadgeText.innerHTML = `${translate('filter-note-country_valid')} <strong>${displayName}</strong>`;
+                        countryFilterBadgeEl.classList.remove('hidden');
+                    } else {
+                        countryFilterBadgeEl.classList.add('hidden');
+                        countryFilterBadgeText.innerText = '';
+                    }
+                }
+            } catch(e) { console.warn('country badge update failed', e); }
+
+            // Ensure the 3D renderer is resized so proportions remain correct
+            setTimeout(() => { try { if (typeof onThreeResize === 'function') onThreeResize(); } catch(e) {} }, 80);
             loadingStatusEl.innerHTML = `<div class="earthquake-count-display"><span class="text-indigo-300">${countToShow.toLocaleString()}</span> ${translate('earthquakes-available')}</div>`;
             lucide.createIcons();
         }
