@@ -173,8 +173,14 @@
             'month': 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/2.5_month.geojson'
         };
         const TILE_LAYERS = {
-            'dark': { url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', attribution: '&copy; CARTO | USGS' },
-            'standard': { url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png', attribution: '&copy; CARTO | USGS' }
+            dark: {
+                url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            },
+            standard: {
+                url: 'https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png',
+                attribution: '&copy; OpenStreetMap contributors &copy; CARTO'
+            }
         };
         const COUNTRY_GEODATA = {
             'japan': { name: 'Japan', bounds: [[20.2, 128.0], [45.5, 146.0]] }, 
